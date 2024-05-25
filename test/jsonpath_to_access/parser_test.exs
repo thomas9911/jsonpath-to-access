@@ -19,6 +19,16 @@ defmodule JsonpathToAccess.ParserTest do
              JsonpathToAccess.Parser.parse("$.books[0].author")
   end
 
+  test "books[1,2].author" do
+    assert {:ok, [{:key, "books"}, {:select_multi_index, [1, 2]}, {:key, "author"}]} =
+             JsonpathToAccess.Parser.parse("$.books[1,2].author")
+  end
+
+  test "books[1,2,4,5].author" do
+    assert {:ok, [{:key, "books"}, {:select_multi_index, [1, 2, 4, 5]}, {:key, "author"}]} =
+             JsonpathToAccess.Parser.parse("$.books[1,2,4,5].author")
+  end
+
   test "books[-2].author" do
     assert {:ok, [{:key, "books"}, {:select_index, -2}, {:key, "author"}]} =
              JsonpathToAccess.Parser.parse("$.books[-2].author")

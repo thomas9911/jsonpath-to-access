@@ -28,6 +28,7 @@ defmodule JsonpathToAccess.Parser do
     parser
     |> choice([
       select_single_index(),
+      select_multi_index(),
       select_range_index(),
       select_all_index()
       # string("[?(") |> query_expr() |> string(")]")
@@ -35,31 +36,39 @@ defmodule JsonpathToAccess.Parser do
   end
 
   def select_single_index(parser \\ nil) do
-    sequence(parser, [
-      ignore(char("[")),
-      map(natural_number(), &{:select_index, &1}),
-      ignore(char("]"))
-    ])
+    parser
+    |> between(char("["), map(natural_number(), &{:select_index, &1}), char("]"))
+  end
+
+  def select_multi_index(parser \\ nil) do
+    parser
+    |> map(
+      between(char("["), sep_by1(natural_number(), char(",")), char("]")),
+      fn indices -> {:select_multi_index, indices} end
+    )
   end
 
   def select_range_index(parser \\ nil) do
     parser
-    |> pipe(
-      [
-        ignore(char("[")),
-        option(natural_number()),
-        ignore(char(":")),
-        option(natural_number()),
-        ignore(char("]"))
-      ],
-      fn [start, stop] ->
-        {:select_range, Range.new(start || 0, (stop || @abitrary_large) - 1)}
-      end
+    |> between(
+      char("["),
+      pipe(
+        [
+          option(natural_number()),
+          ignore(char(":")),
+          option(natural_number())
+        ],
+        fn [start, stop] ->
+          {:select_range, Range.new(start || 0, (stop || @abitrary_large) - 1)}
+        end
+      ),
+      char("]")
     )
   end
 
   def select_all_index(parser \\ nil) do
-    sequence(parser, [ignore(char("[")), map(char("*"), &{:select_all, &1}), ignore(char("]"))])
+    parser
+    |> between(char("["), map(char("*"), &{:select_all, &1}), char("]"))
   end
 
   def query_expr(parser \\ nil) do
@@ -75,18 +84,8 @@ defmodule JsonpathToAccess.Parser do
   end
 
   def quoted_identifier(parser \\ nil) do
-    pipe(
-      parser,
-      [
-        ignore(char("[")),
-        ignore(char("'")),
-        # can we use word() here?
-        many(none_of(char(), ["'"])),
-        ignore(char("'")),
-        ignore(char("]"))
-      ],
-      &Enum.join/1
-    )
+    parser
+    |> between(string("['"), map(many(none_of(char(), ["'"])), &Enum.join/1), string("']"))
   end
 
   def natural_number(parser \\ nil) do
