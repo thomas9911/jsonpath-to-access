@@ -46,4 +46,14 @@ defmodule JsonpathToAccess do
   def map_to_access({:select_index, index}, _), do: Access.at(index)
   def map_to_access({:select_range, range}, _), do: Access.slice(range)
   def map_to_access({:select_all, _}, _), do: Access.all()
+
+  def filtering({pointer, comparison, value}) do
+    # accessing = to_access(pointer, [])
+
+    fn _, data, next ->
+      IO.inspect(data)
+      res = Enum.at(data, 0)
+      next.(res)
+    end
+  end
 end
