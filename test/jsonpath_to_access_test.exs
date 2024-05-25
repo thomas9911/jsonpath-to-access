@@ -13,6 +13,7 @@ defmodule JsonpathToAccessTest do
     test "atom map" do
       data = %{r: 1, z: 4}
       assert {:ok, 1} = JsonpathToAccess.lookup(data, "$.r")
+      assert {:ok, 1} = JsonpathToAccess.lookup(data, "$['r']")
       assert {:ok, 4} = JsonpathToAccess.lookup(data, "$.z")
       assert {:ok, nil} = JsonpathToAccess.lookup(data, "$.p")
     end
@@ -29,6 +30,7 @@ defmodule JsonpathToAccessTest do
 
       assert {:ok, 1} = JsonpathToAccess.lookup(data, "$.r[0].a")
       assert {:ok, 2} = JsonpathToAccess.lookup(data, "$.r[1].a")
+      assert {:ok, 2} = JsonpathToAccess.lookup(data, "$['r'][1]['a']")
       assert {:ok, 3} = JsonpathToAccess.lookup(data, "$.r[2].a")
       assert {:ok, 4} = JsonpathToAccess.lookup(data, "$.r[3].a")
       assert {:ok, nil} = JsonpathToAccess.lookup(data, "$.r[4].a")
