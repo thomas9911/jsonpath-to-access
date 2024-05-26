@@ -41,5 +41,26 @@ defmodule JsonpathToAccessTest do
 
       assert {:ok, [1, 2, 3, 4]} = JsonpathToAccess.lookup(data, "$.r[*].a")
     end
+
+    test "query simple" do
+      data = %{
+        r: [%{a: 1}, %{a: 2, b: nil}, %{a: 3}, %{a: 4, b: false}]
+      }
+
+      assert {:ok, [2, 4]} = JsonpathToAccess.lookup(data, "$.r[?(@.b)].a")
+    end
+
+    test "query nested" do
+      data = %{
+        r: [
+          %{a: 1},
+          %{a: 2, b: %{c: 15}},
+          %{a: 3, b: %{c: 16}},
+          %{a: 4, b: nil}
+        ]
+      }
+
+      assert {:ok, [2, 3]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c)].a")
+    end
   end
 end

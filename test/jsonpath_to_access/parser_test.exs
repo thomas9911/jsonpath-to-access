@@ -65,4 +65,10 @@ defmodule JsonpathToAccess.ParserTest do
     assert {:ok, [{:key, "books"}, {:select_all, "*"}, {:key, "author"}]} =
              JsonpathToAccess.Parser.parse("$.books[*].author")
   end
+
+  test "books[?(@.isbn)].author" do
+    assert {:ok,
+            [{:key, "books"}, {:query, {:relative_path, [{:key, "isbn"}]}}, {:key, "author"}]} =
+             JsonpathToAccess.Parser.parse("$.books[?(@.isbn)].author")
+  end
 end

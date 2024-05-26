@@ -30,7 +30,8 @@ defmodule JsonpathToAccess.Parser do
       select_single_index(),
       select_multi_index(),
       select_range_index(),
-      select_all_index()
+      select_all_index(),
+      query_expr()
       # string("[?(") |> query_expr() |> string(")]")
     ])
   end
@@ -72,11 +73,39 @@ defmodule JsonpathToAccess.Parser do
   end
 
   def query_expr(parser \\ nil) do
-    parser |> string("hallo this is a random string!!")
+    parser
+    |> between(string("[?("), inner_query(), string(")]"))
+  end
+
+  def inner_query(parser \\ nil) do
+    parser
+    |> map(
+      choice([
+        relative_path()
+      ]),
+      fn data ->
+        {:query, data}
+      end
+    )
+  end
+
+  def relative_path(parser \\ nil) do
+    parser
+    |> pipe(
+      [
+        ignore(char("@")),
+        many1(tagged_identifier())
+      ],
+      fn [path] -> {:relative_path, path} end
+    )
   end
 
   def tagged_identifier(parser \\ nil) do
-    map(parser, either(char(".") |> identifier(), quoted_identifier()), &{:key, &1})
+    map(
+      parser,
+      either(pipe([ignore(char(".")), identifier()], &Enum.at(&1, 0)), quoted_identifier()),
+      &{:key, &1}
+    )
   end
 
   def identifier(parser \\ nil) do
