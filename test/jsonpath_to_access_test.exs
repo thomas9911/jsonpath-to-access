@@ -44,10 +44,17 @@ defmodule JsonpathToAccessTest do
 
     test "query simple" do
       data = %{
-        r: [%{a: 1}, %{a: 2, b: nil}, %{a: 3}, %{a: 4, b: false}]
+        r: [%{a: 1}, %{a: 2, b: nil}, %{a: 3}, %{a: 4, b: 0}]
       }
 
       assert {:ok, [2, 4]} = JsonpathToAccess.lookup(data, "$.r[?(@.b)].a")
+      assert {:ok, [1, 3]} = JsonpathToAccess.lookup(data, "$.r[?(!@.b)].a")
+      assert {:ok, [4]} = JsonpathToAccess.lookup(data, "$.r[?(@.b == 0)].a")
+      assert {:ok, [2]} = JsonpathToAccess.lookup(data, "$.r[?(@.b != 0)].a")
+      assert {:ok, []} = JsonpathToAccess.lookup(data, "$.r[?(@.b > 0)].a")
+      assert {:ok, [4]} = JsonpathToAccess.lookup(data, "$.r[?(@.b >= 0)].a")
+      assert {:ok, [4]} = JsonpathToAccess.lookup(data, "$.r[?(@.b < 8)].a")
+      assert {:ok, [4]} = JsonpathToAccess.lookup(data, "$.r[?(@.b <= 0)].a")
     end
 
     test "query nested" do
@@ -61,6 +68,13 @@ defmodule JsonpathToAccessTest do
       }
 
       assert {:ok, [2, 3]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c)].a")
+      assert {:ok, [1, 4]} = JsonpathToAccess.lookup(data, "$.r[?(!@.b.c)].a")
+      assert {:ok, [2]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c == 15)].a")
+      assert {:ok, [3]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c != 15)].a")
+      assert {:ok, [3]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c > 15)].a")
+      assert {:ok, [2, 3]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c >= 15)].a")
+      assert {:ok, []} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c < 15)].a")
+      assert {:ok, [2]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c <= 15)].a")
     end
   end
 end

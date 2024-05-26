@@ -68,7 +68,87 @@ defmodule JsonpathToAccess.ParserTest do
 
   test "books[?(@.isbn)].author" do
     assert {:ok,
-            [{:key, "books"}, {:query, {:relative_path, [{:key, "isbn"}]}}, {:key, "author"}]} =
-             JsonpathToAccess.Parser.parse("$.books[?(@.isbn)].author")
+            [
+              {:key, "books"},
+              {:query, {:contains, {:relative_path, [{:key, "isbn"}]}}},
+              {:key, "author"}
+            ]} = JsonpathToAccess.Parser.parse("$.books[?(@.isbn)].author")
+  end
+
+  test "books[?(!@.isbn)].author" do
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query, {:not_contains, {:relative_path, [{:key, "isbn"}]}}},
+              {:key, "author"}
+            ]} = JsonpathToAccess.Parser.parse("$.books[?(!@.isbn)].author")
+  end
+
+  test "books[?(@.name == 'foo')].author" do
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query, {:equals, {:relative_path, [{:key, "name"}]}, "foo"}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.name == 'foo')].author")
+
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query, {:equals, {:relative_path, [{:key, "name"}]}, "foo"}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.name=='foo')].author")
+  end
+
+  test "books[?(@.name != 'foo')].author" do
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query, {:not_equals, {:relative_path, [{:key, "name"}]}, "foo"}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.name != 'foo')].author")
+
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query, {:not_equals, {:relative_path, [{:key, "name"}]}, "foo"}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.name!='foo')].author")
+  end
+
+  test "books[?(@.id > 2)].author" do
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query, {:greater, {:relative_path, [{:key, "id"}]}, 2}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.id > 2)].author")
+  end
+
+  test "books[?(@.id >= 2)].author" do
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query, {:greater_equals, {:relative_path, [{:key, "id"}]}, 2}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.id >= 2)].author")
+  end
+
+  test "books[?(@.id < 2)].author" do
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query, {:lesser, {:relative_path, [{:key, "id"}]}, 2}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.id < 2)].author")
+  end
+
+  test "books[?(@.id <= 2)].author" do
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query, {:lesser_equals, {:relative_path, [{:key, "id"}]}, 2}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.id <= 2)].author")
   end
 end

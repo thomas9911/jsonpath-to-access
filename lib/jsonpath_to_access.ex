@@ -3,6 +3,8 @@ defmodule JsonpathToAccess do
   Documentation for `JsonpathToAccess`.
   """
 
+  alias JsonpathToAccess.SafeComparisions
+
   def lookup(data, jsonpath) do
     opts = determine_opts(data)
 
@@ -45,23 +47,33 @@ defmodule JsonpathToAccess do
   def map_to_access({:select_range, range}, _), do: Access.slice(range)
   def map_to_access({:select_all, _}, _), do: Access.all()
 
-  def map_to_access({:query, {:relative_path, path}}, opts) do
+  def map_to_access({:query, {:contains, {:relative_path, path}}}, opts) do
+    converted_path = to_access(path, opts)
+    Access.filter(&match?({:ok, _}, fetch_in(&1, converted_path)))
+  end
+
+  def map_to_access({:query, {:not_contains, {:relative_path, path}}}, opts) do
+    converted_path = to_access(path, opts)
+    Access.filter(&match?(:error, fetch_in(&1, converted_path)))
+  end
+
+  def map_to_access({:query, {operator, {:relative_path, path}, literal}}, opts) do
     converted_path = to_access(path, opts)
 
     Access.filter(fn current_data ->
-      match?({:ok, _}, fetch_in(current_data, converted_path))
+      case fetch_in(current_data, converted_path) do
+        {:ok, data} -> compare(operator, data, literal)
+        _ -> false
+      end
     end)
   end
 
-  def filtering({pointer, comparison, value}) do
-    # accessing = to_access(pointer, [])
-
-    fn _, data, next ->
-      IO.inspect(data)
-      res = Enum.at(data, 0)
-      next.(res)
-    end
-  end
+  defp compare(:equals, data, literal), do: SafeComparisions.==(data, literal)
+  defp compare(:not_equals, data, literal), do: SafeComparisions.!=(data, literal)
+  defp compare(:greater, data, literal), do: SafeComparisions.>(data, literal)
+  defp compare(:greater_equals, data, literal), do: SafeComparisions.>=(data, literal)
+  defp compare(:lesser, data, literal), do: SafeComparisions.<(data, literal)
+  defp compare(:lesser_equals, data, literal), do: SafeComparisions.<=(data, literal)
 
   @spec fetch_in(Access.t(), nonempty_list(term)) :: {:ok, term} | :error
   def fetch_in(data, keys)

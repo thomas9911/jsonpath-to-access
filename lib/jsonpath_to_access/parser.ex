@@ -81,10 +81,47 @@ defmodule JsonpathToAccess.Parser do
     parser
     |> map(
       choice([
-        relative_path()
+        query_comparison(">", :greater),
+        query_comparison(">=", :greater_equals),
+        query_comparison("<", :lesser),
+        query_comparison("<=", :lesser_equals),
+        query_comparison("!=", :not_equals),
+        query_comparison("==", :equals),
+        query_not_contains(),
+        query_contains()
       ]),
       fn data ->
         {:query, data}
+      end
+    )
+  end
+
+  def query_contains(parser \\ nil) do
+    parser
+    |> pipe(
+      [relative_path()],
+      fn [path] ->
+        {:contains, path}
+      end
+    )
+  end
+
+  def query_not_contains(parser \\ nil) do
+    parser
+    |> pipe(
+      [ignore(char("!")), relative_path()],
+      fn [path] ->
+        {:not_contains, path}
+      end
+    )
+  end
+
+  def query_comparison(parser \\ nil, text, tag) do
+    parser
+    |> pipe(
+      [relative_path(), skip(spaces()), string(text), skip(spaces()), value_literal()],
+      fn [path, _, value] ->
+        {tag, path, value}
       end
     )
   end
@@ -114,7 +151,20 @@ defmodule JsonpathToAccess.Parser do
 
   def quoted_identifier(parser \\ nil) do
     parser
-    |> between(string("['"), map(many(none_of(char(), ["'"])), &Enum.join/1), string("']"))
+    |> between(string("["), string_literal(), string("]"))
+  end
+
+  def value_literal(parser \\ nil) do
+    parser
+    |> choice([
+      string_literal(),
+      natural_number()
+    ])
+  end
+
+  def string_literal(parser \\ nil) do
+    parser
+    |> between(char("'"), map(many1(none_of(char(), ["'"])), &Enum.join/1), char("'"))
   end
 
   def natural_number(parser \\ nil) do
