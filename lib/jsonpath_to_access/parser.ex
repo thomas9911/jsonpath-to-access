@@ -61,10 +61,15 @@ defmodule JsonpathToAccess.Parser do
         [
           option(natural_number()),
           ignore(char(":")),
-          option(natural_number())
+          option(natural_number()),
+          option(sequence([ignore(char(":")), natural_number()]))
         ],
-        fn [start, stop] ->
-          {:select_range, Range.new(start || 0, (stop || @abitrary_large) - 1)}
+        fn
+          [start, stop, nil] ->
+            {:select_range, Range.new(start || 0, (stop || @abitrary_large) - 1)}
+
+          [start, stop, [step]] ->
+            {:select_range, Range.new(start || 0, (stop || @abitrary_large) - 1, step)}
         end
       ),
       char("]")
