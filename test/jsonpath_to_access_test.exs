@@ -63,18 +63,35 @@ defmodule JsonpathToAccessTest do
           %{a: 1},
           %{a: 2, b: %{c: 15}},
           %{a: 3, b: %{c: 16}},
-          %{a: 4, b: nil}
+          %{a: 4, b: nil},
+          %{a: 5, b: %{c: 5}}
         ]
       }
 
-      assert {:ok, [2, 3]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c)].a")
+      assert {:ok, [2, 3, 5]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c)].a")
       assert {:ok, [1, 4]} = JsonpathToAccess.lookup(data, "$.r[?(!@.b.c)].a")
       assert {:ok, [2]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c == 15)].a")
-      assert {:ok, [3]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c != 15)].a")
+      assert {:ok, [3, 5]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c != 15)].a")
       assert {:ok, [3]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c > 15)].a")
       assert {:ok, [2, 3]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c >= 15)].a")
-      assert {:ok, []} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c < 15)].a")
-      assert {:ok, [2]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c <= 15)].a")
+      assert {:ok, [5]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c < 15)].a")
+      assert {:ok, [2, 5]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c <= 15)].a")
+      assert {:ok, [5]} = JsonpathToAccess.lookup(data, "$.r[?(@.a == @.b.c)].a")
+    end
+
+    test "absolute path" do
+      data = %{
+        id: 16,
+        r: [
+          %{a: 1},
+          %{a: 2, b: %{c: 15}},
+          %{a: 3, b: %{c: 16}},
+          %{a: 4, b: nil},
+          %{a: 5, b: %{c: 16}}
+        ]
+      }
+
+      assert {:ok, [3, 5]} = JsonpathToAccess.lookup(data, "$.r[?(@.b.c == $.id)].a")
     end
   end
 end

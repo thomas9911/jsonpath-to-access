@@ -17,7 +17,11 @@ defmodule JsonpathToAccess.Parser do
   end
 
   def parser do
-    ignore(char("$")) |> many1(dotnotation_expr()) |> eof()
+    root() |> eof()
+  end
+
+  def root() do
+    ignore(char("$")) |> many1(dotnotation_expr())
   end
 
   def dotnotation_expr(parser \\ nil) do
@@ -119,10 +123,31 @@ defmodule JsonpathToAccess.Parser do
   def query_comparison(parser \\ nil, text, tag) do
     parser
     |> pipe(
-      [relative_path(), skip(spaces()), string(text), skip(spaces()), value_literal()],
+      [
+        relative_path(),
+        skip(spaces()),
+        string(text),
+        skip(spaces()),
+        choice([
+          value_literal(),
+          relative_path(),
+          just_absolute_path()
+        ])
+      ],
       fn [path, _, value] ->
         {tag, path, value}
       end
+    )
+  end
+
+  def just_absolute_path(parser \\ nil) do
+    parser
+    |> pipe(
+      [
+        ignore(char("$")),
+        many1(tagged_identifier())
+      ],
+      fn [path] -> {:absolute_path, path} end
     )
   end
 
@@ -146,7 +171,7 @@ defmodule JsonpathToAccess.Parser do
   end
 
   def identifier(parser \\ nil) do
-    pipe(parser, [letter(), many(alphanumeric())], &Enum.join/1)
+    pipe(parser, [letter(), many(either(alphanumeric(), char("_")))], &Enum.join/1)
   end
 
   def quoted_identifier(parser \\ nil) do

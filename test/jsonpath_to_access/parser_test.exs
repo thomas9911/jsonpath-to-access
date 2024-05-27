@@ -151,4 +151,25 @@ defmodule JsonpathToAccess.ParserTest do
               {:key, "author"}
             ]} == JsonpathToAccess.Parser.parse("$.books[?(@.id <= 2)].author")
   end
+
+  test "books[?(@.id == @.remote_id)].author" do
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query,
+               {:equals, {:relative_path, [{:key, "id"}]},
+                {:relative_path, [{:key, "remote_id"}]}}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.id == @.remote_id)].author")
+  end
+
+  test "books[?(@.id == $.id)].author" do
+    assert {:ok,
+            [
+              {:key, "books"},
+              {:query,
+               {:equals, {:relative_path, [{:key, "id"}]}, {:absolute_path, [{:key, "id"}]}}},
+              {:key, "author"}
+            ]} == JsonpathToAccess.Parser.parse("$.books[?(@.id == $.id)].author")
+  end
 end

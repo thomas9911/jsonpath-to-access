@@ -9,8 +9,12 @@ defmodule JsonpathToAccess do
     opts = determine_opts(data)
 
     case convert(jsonpath, opts) do
-      {:ok, access} -> {:ok, get_in(data, access)}
-      e -> e
+      {:ok, access} ->
+        resolved_access = resolve_absolute_paths(access, data)
+        {:ok, get_in(data, resolved_access)}
+
+      e ->
+        e
     end
   end
 
@@ -29,6 +33,23 @@ defmodule JsonpathToAccess do
   end
 
   defp determine_opts(_), do: []
+
+  def resolve_absolute_paths(access, data) do
+    Enum.map(access, &resolve_path(&1, data))
+  end
+
+  defp resolve_path({:absolute, {operator, converted_path, converted_absolute_path}}, data) do
+    Access.filter(fn current_data ->
+      with {:ok, resolved_data} <- fetch_in(data, converted_absolute_path),
+           {:ok, data} <- fetch_in(current_data, converted_path) do
+        compare(operator, data, resolved_data)
+      else
+        _ -> false
+      end
+    end)
+  end
+
+  defp resolve_path(path, _), do: path
 
   def convert(jsonpath, opts \\ []) do
     case JsonpathToAccess.Parser.parse(jsonpath) do
@@ -55,6 +76,33 @@ defmodule JsonpathToAccess do
   def map_to_access({:query, {:not_contains, {:relative_path, path}}}, opts) do
     converted_path = to_access(path, opts)
     Access.filter(&match?(:error, fetch_in(&1, converted_path)))
+  end
+
+  def map_to_access(
+        {:query, {operator, {:relative_path, path}, {:absolute_path, absolute_path}}},
+        opts
+      ) do
+    converted_path = to_access(path, opts)
+    converted_absolute_path = to_access(absolute_path, opts)
+
+    {:absolute, {operator, converted_path, converted_absolute_path}}
+  end
+
+  def map_to_access(
+        {:query, {operator, {:relative_path, path_left}, {:relative_path, path_right}}},
+        opts
+      ) do
+    converted_path_left = to_access(path_left, opts)
+    converted_path_right = to_access(path_right, opts)
+
+    Access.filter(fn current_data ->
+      with {:ok, left_side} <- fetch_in(current_data, converted_path_left),
+           {:ok, right_side} <- fetch_in(current_data, converted_path_right) do
+        compare(operator, left_side, right_side)
+      else
+        _ -> false
+      end
+    end)
   end
 
   def map_to_access({:query, {operator, {:relative_path, path}, literal}}, opts) do
