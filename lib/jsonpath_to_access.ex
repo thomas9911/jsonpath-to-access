@@ -113,7 +113,7 @@ defmodule JsonpathToAccess do
     end
   end
 
-  @spec to_access(list, options) :: access_path
+  @spec to_access(list, options | map) :: access_path
   defp to_access(instructions, opts) do
     Enum.map(instructions, &map_to_access(&1, Map.new(opts)))
   end

@@ -1,7 +1,8 @@
 defmodule JsonpathToAccess.Parser do
+  @moduledoc """
+  Implements a parser for JSONPath expressions.
+  """
   use Combine
-
-  # https://github.com/stevenalexander/antlr4-jsonpath-grammar/blob/master/JsonPath.g4
 
   # hack because elixir does not support infinite ranges
   @abitrary_large 2 ** 64
@@ -36,7 +37,6 @@ defmodule JsonpathToAccess.Parser do
       select_range_index(),
       select_all_index(),
       query_expr()
-      # string("[?(") |> query_expr() |> string(")]")
     ])
   end
 
@@ -211,12 +211,4 @@ defmodule JsonpathToAccess.Parser do
       end
     )
   end
-
-  # def ws do
-  #   skip_many(choice([space(), integer(), word()]))
-  # end
-
-  # INDENTIFIER : [a-zA-Z][a-zA-Z0-9]* ;
-  # INT         : '0' | [1-9][0-9]* ;
-  # WS  :   [ \t\n\r]+ -> skip ;
 end

@@ -1,4 +1,10 @@
 defmodule JsonpathToAccess.SafeComparisions do
+  @moduledoc """
+  Normal Elixir comparisions can compare different types, this module implements the comparisions only if the types are the same.
+  Otherwise they are false.
+
+  Don't use these functions for sorting, because this will return unexpected results.
+  """
   defguard is_same_type(a, b)
            when (is_atom(a) and is_atom(b)) or (is_list(a) and is_list(b)) or
                   (is_map(a) and is_map(b)) or (is_tuple(a) and is_tuple(b)) or
