@@ -1,6 +1,10 @@
 defmodule JsonpathToAccess do
   @moduledoc """
   This module provides a function to convert a JSONPath expression into an access path.
+  This library does not support all of jsonpath:
+
+  - the `..` operator is not supported because it can't be expressed using Access functions (that I know of)
+  - all the functions like length for the same reason as above
 
   There are two main methods:
 

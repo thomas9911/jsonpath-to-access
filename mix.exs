@@ -7,7 +7,8 @@ defmodule JsonpathToAccess.MixProject do
       version: "0.1.0",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      package: package()
     ]
   end
 
@@ -15,6 +16,14 @@ defmodule JsonpathToAccess.MixProject do
   def application do
     [
       extra_applications: [:logger]
+    ]
+  end
+
+  def package do
+    [
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/thomas9911/jsonpath-to-access"},
+      description: "Library to convert a JSONPath expression into an access path"
     ]
   end
 
