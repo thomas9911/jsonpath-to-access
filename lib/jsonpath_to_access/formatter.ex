@@ -3,8 +3,7 @@ defmodule JsonpathToAccess.Formatter do
   This module is responsible for formatting the AST into a string that can be used to access the JSON data.
   """
 
-  @type operator :: :equals | :not_equals | :lesser | :greater | :lesser_equals | :greater_equals
-  @type tree :: keyword
+  @type tree :: JsonpathToAccess.access_path()
 
   @spec format(tree, keyword) :: binary
   def format(tree, opts \\ []) do
@@ -51,7 +50,7 @@ defmodule JsonpathToAccess.Formatter do
     ["[?(", formatted_key, " ", ops, " ", formatted_value, ")]"]
   end
 
-  @spec format_operator(operator) :: binary
+  @spec format_operator(JsonpathToAccess.operator()) :: binary
   defp format_operator(:equals), do: "=="
   defp format_operator(:not_equals), do: "!="
   defp format_operator(:lesser), do: "<"
