@@ -1,6 +1,41 @@
 defmodule JsonpathToAccess do
   @moduledoc """
-  Documentation for `JsonpathToAccess`.
+  This module provides a function to convert a JSONPath expression into an access path.
+
+  There are two main methods:
+
+  - `convert/2` and `get_in/2`
+
+  Convert the JSONPath expression into an access path. This function is used by the `get_in/2` function.
+  You have to specify upfront if the data contains atom keys or not.
+  You can cache or put the convert in a module attribute.
+
+  ```elixir
+  iex> path = JsonpathToAccess.convert!("$.store.book[0].author", to_atoms: true)
+  iex> JsonpathToAccess.get_in(%{store: %{book: [%{author: "Gandalf"}]}}, path)
+  "Gandalf"
+  ```
+
+  ```elixir
+  defmodule MyModule do
+    @json_path JsonpathToAccess.convert!("$.store.book[0].author")
+
+    def my_lookup(data) do
+      # or you can use the normal get_in if you don't use absolute path filter.
+      JsonpathToAccess.get_in(data, @json_path)
+    end
+  end
+  ```
+
+  - `lookup/2`
+
+  Just lookup the value in a map using the JSONPath expression.
+
+  ```elixir
+  iex> JsonpathToAccess.lookup(%{store: %{book: [%{author: "Gandalf"}]}}, "$.store.book[0].author")
+  {:ok, "Gandalf"}
+  ```
+
   """
   import Kernel, except: [get_in: 2]
 
@@ -85,6 +120,9 @@ defmodule JsonpathToAccess do
   iex> {:ok, access_path} = JsonpathToAccess.convert("$.a.b")
   iex> JsonpathToAccess.get_in(%{"a" => %{"b" => "value"}}, access_path)
   "value"
+  iex> {:ok, access_path} = JsonpathToAccess.convert("$.a.b", to_atoms: true)
+  iex> JsonpathToAccess.get_in(%{a: %{b: "value"}}, access_path)
+  "value"
   ```
   """
   @spec convert(binary, options) :: {:ok, access_path} | {:error, binary}
@@ -102,6 +140,9 @@ defmodule JsonpathToAccess do
   ```elixir
   iex> access_path = JsonpathToAccess.convert!("$.a.b")
   iex> JsonpathToAccess.get_in(%{"a" => %{"b" => "value"}}, access_path)
+  "value"
+  iex> access_path = JsonpathToAccess.convert!("$.a.b", to_atoms: true)
+  iex> JsonpathToAccess.get_in(%{a: %{b: "value"}}, access_path)
   "value"
   ```
   """
